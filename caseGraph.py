@@ -5,50 +5,33 @@ import matplotlib.pyplot as plt
 with open('./ASMO/AS.csv') as file:
     reader = csv.DictReader(file)
 
-    case = 0
-    judge = 0
+    case = input("enter legal case number: ")
     G = nx.MultiDiGraph()
-    judgeList = []
-    count = 1
-    new_judge = False
-
+    count = 0
 
     for row in reader:
-        if case == 21:
+        if int(row['case']) > int(case):
             break
 
-        body = str(row['body'])
-        relation = str(row['relation'])
+        if int(row['case']) == int(case):
 
-        if new_judge == True:
-            judgeList.append([body, judge])
-            new_judge = False
+            body = str(row['body'])
+            relation = str(row['relation'])
 
-        if "http" in body:
-            if case > 0:
-                #for x in range(len(judgeList)):
-                #   print(judgeList[x])
-                nx.draw_networkx(G)
-                plt.draw()
-                G.clear()
-                judgeList.clear()
-                judge == 0
-                count == 1
-            
-            #judgeList.append(["name", "number", "to"])
-            case += 1
-            plt.figure(case)
 
-        if "------------- NEW JUDGE ---------------" in body:
-            judge += 1
-            new_judge = True
+            if "http" in body:
+                plt.figure(case)
         
-        if "fullagr" in relation:
-            count += 1
-            G.add_edge(str(row['from']), str(row['to']))
-            #judgeList.append([str(row['from']), judge, str(row['to'])])
+            if "fullagr" in relation:
+                if "self" in str(row['to']):
+                    G.add_edge(str(row['from']), str(row['from']))
+                else:
+                    G.add_edge(str(row['from']), str(row['to']))
+        count += 1
+        print("count = ", count)
 
-    nx.draw_networkx(G)
+    nx.draw_networkx(G, node_size=400,font_size=8)
     plt.draw()
-
+    #fig_name = "case_" + case + ".png"
+    #plt.savefig(fig_name)
     plt.show()
