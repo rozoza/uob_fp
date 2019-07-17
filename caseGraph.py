@@ -1,13 +1,14 @@
 import csv
 import networkx as nx
 import matplotlib.pyplot as plt
+from networkx.drawing.nx_pydot import write_dot
 
 with open('./ASMO/AS.csv') as file:
     reader = csv.DictReader(file)
 
     case = input("enter legal case number: ")
     G = nx.MultiDiGraph()
-    count = 0
+    #count = 0
 
     for row in reader:
         if int(row['case']) > int(case):
@@ -24,14 +25,22 @@ with open('./ASMO/AS.csv') as file:
         
             if "fullagr" in relation:
                 if "self" in str(row['to']):
+                    G.add_node(str(row['from']))
                     G.add_edge(str(row['from']), str(row['from']))
                 else:
                     G.add_edge(str(row['from']), str(row['to']))
-        count += 1
-        print("count = ", count)
+        #count += 1
+        #print("count = ", count)
 
-    nx.draw_networkx(G, node_size=400,font_size=8)
+    pos = nx.shell_layout(G)
+    nodes = nx.draw_networkx_nodes(G, pos=pos, node_size=700, node_color='white', node_shape='o')
+    edges = nx.draw_networkx_edges(G, pos=pos, edge_color='black', arrowsize=30)
+    labels = nx.draw_networkx_labels(G, pos=pos, font_size=10)
+    nodes.set_edgecolor('black')
     plt.draw()
-    #fig_name = "case_" + case + ".png"
-    #plt.savefig(fig_name)
-    plt.show()
+    #write_dot(G, 'test50.dot')
+    fig_name = "case_" + case + ".png"
+    file_path = "./graphs/"
+    plt.savefig(file_path + fig_name)
+    #plt.show()
+    
