@@ -45,9 +45,9 @@ with open('./ASMO/AS.csv') as file:
             color_map.append('white')
 
 
-    pos = nx.shell_layout(G)
-    nodes = nx.draw_networkx_nodes(G, pos=pos, node_size=700, node_color=color_map, node_shape='o')
-    edges = nx.draw_networkx_edges(G, pos=pos, edge_color='black', arrowsize=30)
+    pos = nx.circular_layout(G, scale=0.1)
+    nodes = nx.draw_networkx_nodes(G, pos=pos, node_size=500, node_color=color_map, node_shape='o')
+    edges = nx.draw_networkx_edges(G, pos=pos, edge_color='black', arrowsize=20)
     labels = nx.draw_networkx_labels(G, pos=pos, font_size=10)
     nodes.set_edgecolor('black')
     plt.draw()
@@ -59,8 +59,8 @@ with open('./ASMO/AS.csv') as file:
         #pdf.close()
 
     fig_name = "case_" + case + ".pdf"
-    file_path = "./graphs/"
-    #plt.savefig(file_path + fig_name)
-    plt.show()
+    file_path = "./graphspdf/"
+    plt.savefig(file_path + fig_name)
+    #plt.show()
     plt.close('all')
     
