@@ -1,20 +1,27 @@
 import xml.etree.ElementTree as ET
 import csv
 
-def getCase_id(tree):
+def getRef(tree):
     ref = tree.findall('HDR/ref')
+    #UKHL number is not found
+    if len(ref) == 0:
+        return 'N/A'
+
+    for el in ref:
+        case_ref = el.text
+    return case_ref
+
+def getCase_id(tree):
     case_ref = ''
     case_num = ''
     case_year = ''
     case_id = ''
 
+    case_ref = getRef(tree)
     #UKHL number is not found
-    if len(ref) == 0:
-        case_id = 'N/A'
-        return case_id
+    if case_ref == 'N/A':
+        return case_ref
 
-    for el in ref:
-        case_ref = el.text
     length = len(case_ref)
 
     #get UKHL case number
@@ -54,6 +61,57 @@ def getAlign(sent_element):
         return 'NONE'
     return sent_element.attrib.get('ALIGN')
 
+def getText(sent_element):
+    wordlist = []
+    text = ' '
+    for sentences in sent_element:
+        if sentences.tag == 'W':
+            wordlist.append(sentences.text)
+        if sentences.tag == 'VG':
+            for vg in sentences:
+                wordlist.append(vg.text)
+        if sentences.tag == 'TIMEX':
+            for timex in sentences:
+                wordlist.append(timex.text)
+        if sentences.tag == 'NG':
+            for ng in sentences:
+                if ng.tag == 'W':
+                    wordlist.append(ng.text)  
+                for nng in ng:
+                    wordlist.append(nng.text)                                   
+    text = text.join(wordlist)
+    return text
+
+def getAgree(case, text):
+    with open('./ASMO/Complete_Corpus.csv') as infile:
+        reader = csv.DictReader(infile)
+
+        wordlist = text.split()
+        count_token = len(wordlist)
+        maxcount = 0
+        sentence = ''
+        index = ''
+
+        for row in reader:
+            count = 0
+            if row['case'] == case:
+                for v in range(count_token):
+                    if wordlist[v] in row['body']:
+                        count += 1
+                if count >= maxcount:
+                    maxcount = count
+                    sentence = row['body']
+                    index = row['line']
+                    print(index, sentence)
+
+def appendcsv(case_id, sentence_id, para_id, judge, text, role, align, agree, outcome, fieldnames):
+    with open('./uob_fp/test_completecsv.csv', 'a', newline='') as out_file:
+        csv_writer = csv.DictWriter(out_file, fieldnames=fieldnames)
+        
+        csv_writer.writerow({'case_id' : case_id, 'sentence_id' : sentence_id, 'para_id' : para_id, 'judge' : judge, 
+                            'text' : text, 'role' : role, 'align' : align, 
+                            'agree' : agree, 'outcome' : outcome})
+
 def completecsv():
     corpusList = ["2001Apr04eastbrn-1.ling.xml", "2001Dec13aib-1.ling.xml", "2001Dec13smith-1.ling.xml", "2001Feb08kuwait-1.ling.xml",
     "2001Feb08presto-1.ling.xml", "2001Jan18intern-1.ling.xml", "2001Jan31card-1.ling.xml", "2001Jul05m-1.ling.xml", "2001Jul12mcgra-1.ling.xml",
@@ -65,6 +123,23 @@ def completecsv():
     "2003Apr10sage-1.ling.xml", "2003Feb20glaz-1.ling.xml", "2003Feb27diets-1.ling.xml", "2003Feb27inrep-1.ling.xml", "2003Jan30kanar-1.ling.xml",
     "2003Jan30regina-1.ling.xml", "2003Jul31moyna-1.ling.xml", "2003Jul31mulkrn-1.ling.xml", "2003Jun12kuwa-1.ling.xml", "2003Jun12lyon-1.ling.xml",
     "2003Mar20sepet-1.ling.xml", "2003Mar20sivak-1.ling.xml", "2003May22john-1.ling.xml"]
+
+    asmoCase = ['22', '23', '11', '9',
+    '12', '14', '13', '5', '20',
+    '3', '2', '21', '7', '4',
+    '15', '18', '19', '6', '17',
+    '42', '38', '26', '45', '43',
+    '31', '35', '36', '32', '40',
+    '29', '24', '34', '47', '69',
+    '55', '63', '57', '62', '46',
+    'N/A', '60', '49', '56', '66',
+    '68', '52', '53']
+
+    fieldnames = ['case_id', 'sentence_id', 'para_id', 'judge', 'text', 'role', 'align', 'agree', 'outcome']
+    with open('./uob_fp/test_completecsv.csv', 'w', newline='') as new_file:
+
+        csv_writer = csv.DictWriter(new_file, fieldnames=fieldnames)
+        csv_writer.writeheader()
 
     #Prototype
     #Will be iterating through corpusList in later stage
@@ -79,12 +154,17 @@ def completecsv():
     sentence_id = '0'
     par_dp = False
     para_id = '0'
-    role = ''
-    align = ''
+    role = '<new-case>'
+    align = 'NONE'
+    text = ''
+    agree = ''
+    outcome = ''
     
+    # getAgree(asmoCase[0], "I have had the advantage of reading in draft the speeches of my noble and learned friends Lord Slynn of Hadley and Lord Hoffmann .")
+
     judgeList = []
     judgeCount = 0
-    judge = ''
+    judge = 'NONE'
     getJudgelist(root, judgeList)
 
     for lords in body:
@@ -109,30 +189,28 @@ def completecsv():
                         if sentence_id != None:
                             role = getRole(sentences)
                             align = getAlign(sentences)
-                            print(case_id, sentence_id, para_id, judge, 'text-for-later', role, align)
+                            text = '\"' + getText(sentences) + '\"'
+                            appendcsv(case_id, sentence_id, para_id, judge, text, role, align, agree, outcome, fieldnames)
+                            #print(case_id, sentence_id, para_id, judge, text, role, align)
                 #print('end of quoteblock')
 
             for sentences in paragraphs:
                 if new_case == True:
-                    print(case_id, '0', '0', 'NONE', 'text-for-later', '<new-case>', 'NONE')
+                    #para_id = '0'
+                    text = '\"' + getRef(tree) + '\"'
+                    appendcsv(case_id, sentence_id, para_id, judge, text, role, align, agree, outcome, fieldnames)
+                    #print(case_id, '0', '0', 'NONE', text, '<new-case>', 'NONE')
                     new_case = False
                 sentence_id = getSent_id(sentences)
                 if sentence_id != None:
                     role = getRole(sentences)
                     align = getAlign(sentences)
-                    print(case_id, sentence_id, para_id, judge, 'text-for-later', role, align)
+                    text = '\"' + getText(sentences) + '\"'
+                    appendcsv(case_id, sentence_id, para_id, judge, text, role, align, agree, outcome, fieldnames)
+                    #print(case_id, sentence_id, para_id, judge, text, role, align)
         judgeCount += 1
 
-#NEED FEATURE TO GET <new_judge> and <new_heading>
+#NEED FEATURE TO GET <new-judge> and <new-heading>
 completecsv()
 
     # pass new case and all the columns, if FIRST case then write, otherwise append
-    # with open('./uob_fp/test_completecsv.csv', 'w', newline='') as new_file:
-    #     fieldnames = ['case_id', 'sentence_id', 'para_id', 'judge', 'text', 'role', 'align', 'agree', 'outcome']
-
-    #     csv_writer = csv.DictWriter(new_file, fieldnames=fieldnames)
-
-    #     csv_writer.writeheader()
-    #     csv_writer.writerow({'case_id' : 2.23, 'sentence_id' : 1, 'para_id' : 0, 'judge' : 'none', 
-    #                         'text' : '[2002] UKHL 23', 'role' : '<new-case>', 'align' : 'none', 
-    #                         'agree' : 'slynn+steyn', 'outcome' : 'allow'})

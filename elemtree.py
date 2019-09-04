@@ -16,8 +16,10 @@ committee = tree.findall('HDR/committee/')
 #     print(text)
 
 for el in sentence:
-    for words in el.findall('W'):
-        print(words.tag, words.attrib)
+    if el.tag == 'TIMEX':
+        print('HELLOS')
+        # for el2 in el:
+        #     print(el2.tag, el2.attrib)
 
 # for s in sentence:
 #     # sentence_attributes = s.attrib
