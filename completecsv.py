@@ -45,9 +45,13 @@ def getJudgelist(root, judgeList):
         judgeList.append(text)
 
 def getRole(sent_element):
+    if sent_element.attrib.get('TYPE') == None:
+        return 'NONE'
     return sent_element.attrib.get('TYPE')
 
 def getAlign(sent_element):
+    if sent_element.attrib.get('ALIGN') == None:
+        return 'NONE'
     return sent_element.attrib.get('ALIGN')
 
 def completecsv():
@@ -102,17 +106,18 @@ def completecsv():
                     for sentences in subpar:
                         #print(sentences.tag, sentences.attrib)
                         sentence_id = getSent_id(sentences)
-                        role = getRole(sentences)
-                        align = getAlign(sentences)
-                        print(case_id, sentence_id, para_id, judge, 'text-for-later', role, align)
+                        if sentence_id != None:
+                            role = getRole(sentences)
+                            align = getAlign(sentences)
+                            print(case_id, sentence_id, para_id, judge, 'text-for-later', role, align)
                 #print('end of quoteblock')
 
             for sentences in paragraphs:
                 if new_case == True:
                     print(case_id, '0', '0', 'NONE', 'text-for-later', '<new-case>', 'NONE')
                     new_case = False
-                if sentences.attrib.get('sid') != None:
-                    sentence_id = getSent_id(sentences)
+                sentence_id = getSent_id(sentences)
+                if sentence_id != None:
                     role = getRole(sentences)
                     align = getAlign(sentences)
                     print(case_id, sentence_id, para_id, judge, 'text-for-later', role, align)
