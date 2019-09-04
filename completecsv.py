@@ -44,6 +44,12 @@ def getJudgelist(root, judgeList):
             text = text.replace('\n', ' ')
         judgeList.append(text)
 
+def getRole(sent_element):
+    return sent_element.attrib.get('TYPE')
+
+def getAlign(sent_element):
+    return sent_element.attrib.get('ALIGN')
+
 def completecsv():
     corpusList = ["2001Apr04eastbrn-1.ling.xml", "2001Dec13aib-1.ling.xml", "2001Dec13smith-1.ling.xml", "2001Feb08kuwait-1.ling.xml",
     "2001Feb08presto-1.ling.xml", "2001Jan18intern-1.ling.xml", "2001Jan31card-1.ling.xml", "2001Jul05m-1.ling.xml", "2001Jul12mcgra-1.ling.xml",
@@ -69,6 +75,8 @@ def completecsv():
     sentence_id = '0'
     par_dp = False
     para_id = '0'
+    role = ''
+    align = ''
     
     judgeList = []
     judgeCount = 0
@@ -94,18 +102,23 @@ def completecsv():
                     for sentences in subpar:
                         #print(sentences.tag, sentences.attrib)
                         sentence_id = getSent_id(sentences)
-                        print(case_id, sentence_id, para_id, judge, 'text-for-later')
+                        role = getRole(sentences)
+                        align = getAlign(sentences)
+                        print(case_id, sentence_id, para_id, judge, 'text-for-later', role, align)
                 #print('end of quoteblock')
 
             for sentences in paragraphs:
                 if new_case == True:
-                    print(case_id, '0', '0', 'none')
+                    print(case_id, '0', '0', 'NONE', 'text-for-later', '<new-case>', 'NONE')
                     new_case = False
                 if sentences.attrib.get('sid') != None:
-                    sentence_id = getSent_id
-                    print(case_id, getSent_id(sentences), para_id, judge, 'text-for-later')
+                    sentence_id = getSent_id(sentences)
+                    role = getRole(sentences)
+                    align = getAlign(sentences)
+                    print(case_id, sentence_id, para_id, judge, 'text-for-later', role, align)
         judgeCount += 1
 
+#NEED FEATURE TO GET <new_judge> and <new_heading>
 completecsv()
 
     # pass new case and all the columns, if FIRST case then write, otherwise append

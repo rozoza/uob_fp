@@ -9,11 +9,15 @@ paragraph = tree.findall('BODY/LORD/P/')
 sentence = tree.findall('BODY/LORD/P/SENT/')
 committee = tree.findall('HDR/committee/')
 
-for el in root.iter('lordname'):
-    text = el.text
-    if '\n' in text:
-        text = text.replace('\n', ' ')
-    print(text)
+# for el in root.iter('lordname'):
+#     text = el.text
+#     if '\n' in text:
+#         text = text.replace('\n', ' ')
+#     print(text)
+
+for el in sentence:
+    for words in el.findall('W'):
+        print(words.tag, words.attrib)
 
 # for s in sentence:
 #     # sentence_attributes = s.attrib
