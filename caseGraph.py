@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from networkx.drawing.nx_pydot import write_dot
 #import matplotlib.backends.backend_pdf
 
-with open('./ASMO/AS.csv') as file:
+with open('./ASMO/Complete_Corpus.csv') as file:
     reader = csv.DictReader(file)
 
     case = input("enter legal case number: ")
@@ -23,7 +23,7 @@ with open('./ASMO/AS.csv') as file:
             relation = str(row['relation'])
 
             if "http" in body:
-                plt.figure(case)
+                fig = plt.figure(case)
             
             if str(row['from']) != "NAN":
                 G.add_node(str(row['from']))
@@ -50,6 +50,8 @@ with open('./ASMO/AS.csv') as file:
     edges = nx.draw_networkx_edges(G, pos=pos, edge_color='black', arrowsize=20)
     labels = nx.draw_networkx_labels(G, pos=pos, font_size=10)
     nodes.set_edgecolor('black')
+    fig_name = "case_" + case + ".pdf"
+    fig.suptitle(fig_name, fontsize=14, fontweight='bold')
     plt.draw()
     #write_dot(G, 'test50.dot')
 
@@ -58,8 +60,7 @@ with open('./ASMO/AS.csv') as file:
         #pdf.savefig( fig )
         #pdf.close()
 
-    fig_name = "case_" + case + ".pdf"
-    file_path = "./graphspdf/"
+    file_path = "./uob_fp/46graphspdf/"
     plt.savefig(file_path + fig_name)
     #plt.show()
     plt.close('all')

@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET
-tree =  ET.parse('./uob_fp/2001Apr04eastbrn-1.ling.xml')
+# tree =  ET.parse('./uob_fp/2001Apr04eastbrn-1.ling.xml')
+tree =  ET.parse('./uob_fp/2002May23burket-1.ling.xml')
 
 root = tree.getroot()
 #print(root)
@@ -15,11 +16,15 @@ committee = tree.findall('HDR/committee/')
 #         text = text.replace('\n', ' ')
 #     print(text)
 
-for el in sentence:
-    if el.tag == 'TIMEX':
-        print('HELLOS')
-        # for el2 in el:
-        #     print(el2.tag, el2.attrib)
+for el in paragraph:
+        if el.tag == 'W':
+                print(el.tag, el.attrib)
+
+# for el in sentence:
+#     if el.tag == 'TIMEX':
+#         print('HELLOS')
+#         # for el2 in el:
+#         #     print(el2.tag, el2.attrib)
 
 # for s in sentence:
 #     # sentence_attributes = s.attrib
