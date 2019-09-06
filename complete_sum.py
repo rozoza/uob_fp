@@ -128,7 +128,8 @@ def getText(sent_element):
     return text
 
 def getAgree(asmo, text, new_case):
-    with open('./ASMO/Complete_Corpus.csv') as infile:
+    filename = 'asmo_' + asmo + '.csv'
+    with open('./uob_fp/ASMO_46_corpus/' + filename) as infile:
         reader = csv.DictReader(infile)
 
         wordlist = text.split()
@@ -138,24 +139,48 @@ def getAgree(asmo, text, new_case):
         index = ''
 
         for row in reader:
-            count = 0
-            if new_case == True :
-                return row['mj']
+            # count = 0
+            # for v in range(count_token):
+            #     if wordlist[v] in row['body']:
+            #         count += 1
+            # if count >= maxcount:
+            #     maxcount = count
+            #     sentence = row['body']
+            #     index = row['line']
+            #     print(index, sentence)
+
+            if new_case == True:
+                majority = row['mj']
+                majority = majority.replace(', ', '+')
+                return majority
             
-            if row['case'] == asmo:
-                if text in row['body']:
-                    return 'matched'
+            if text in row['body']:
+                if row['relation'] == 'fullagr':
+                    return row['to']
+                else:
+                    return 'NONE'
         return 'no match'
-                # for v in range(count_token):
-                #     if wordlist[v] in row['body']:
-                #         count += 1
-                # if count >= maxcount:
-                #     maxcount = count
-                #     sentence = row['body']
-                #     index = row['line']
-                #     print(index, sentence)
+
+def getOutcome(asmo, text, new_case):
+    if new_case == True:
+        return 'NONE'
+
+    filename = 'asmo_' + asmo + '.csv'
+    with open('./uob_fp/ASMO_46_corpus/' + filename) as infile:
+        reader = csv.DictReader(infile)
+
+        for row in reader:
+            if text in row['body']:
+                if row['relation'] == 'outcome':
+                    if 'allow' in text:
+                        return 'allow'
+                    elif 'dismiss' in text:
+                        return 'dismiss'
+                return 'NONE'
+        return 'no match'
 
 def appendcsv(case_id, sentence_id, para_id, judge, text, role, align, agree, outcome, fieldnames):
+    # with open('./uob_fp/test.csv', 'a', newline='') as out_file: #for quick testing
     with open('./uob_fp/complete_sum.csv', 'a', newline='') as out_file:
         csv_writer = csv.DictWriter(out_file, fieldnames=fieldnames)
         
@@ -187,11 +212,13 @@ def complete_sum():
     '68', '52', '53']
 
     fieldnames = ['case_id', 'sentence_id', 'para_id', 'judge', 'text', 'role', 'align', 'agree', 'outcome']
+    # with open('./uob_fp/test.csv', 'w', newline='') as new_file: #for quick testing
     with open('./uob_fp/complete_sum.csv', 'w', newline='') as new_file:
 
         csv_writer = csv.DictWriter(new_file, fieldnames=fieldnames)
         csv_writer.writeheader()
 
+    # count = 0 #for quick testing
     for v in range(len(corpusList)):
         #cannot find the corresponding ASMO case
         if corpusList[v] == "2003Jan30regina-1.ling.xml":
@@ -214,8 +241,6 @@ def complete_sum():
         agree = ''
         outcome = ''
         
-        # getAgree(asmoCase[0], "I have had the advantage of reading in draft the speeches of my noble and learned friends Lord Slynn of Hadley and Lord Hoffmann .")
-
         judgeList = []
         judge_full = ''
         judgeCount = 0
@@ -251,7 +276,8 @@ def complete_sum():
                                 role = getRole(sentences)
                                 align = getAlign(sentences)
                                 text = getText(sentences)
-                                # agree = getAgree(asmo, text, new_case)
+                                agree = getAgree(asmo, text, new_case)
+                                outcome = getOutcome(asmo, text, new_case)
                                 appendcsv(case_id, sentence_id, para_id, judge, text, role, align, agree, outcome, fieldnames)
                                 # print(case_id, sentence_id, para_id, judge, text, role, align)
                     #print('end of quoteblock')
@@ -260,6 +286,8 @@ def complete_sum():
                     if sentences.tag == 'W':
                         sentence_id = 'N/A'
                         align = 'NONE'
+                        agree = 'NONE'
+                        outcome = 'NONE'
                         if sentences.attrib.get('P') == None:
                             role = '<prep-date>'  
                             text = sentences.text
@@ -283,7 +311,8 @@ def complete_sum():
                     if new_case == True:
                         #para_id = '0'
                         text = getRef(tree)
-                        # agree = getAgree(asmo, text, new_case)
+                        agree = getAgree(asmo, text, new_case)
+                        outcome = getOutcome(asmo, text, new_case)
                         appendcsv(case_id, sentence_id, para_id, judge, text, role, align, agree, outcome, fieldnames)
                         # print(case_id, '0', '0', 'NONE', text, '<new-case>', 'NONE')
                         new_case = False
@@ -298,9 +327,14 @@ def complete_sum():
                             text_in_par = ''
                         else:
                             text = getText(sentences)
-                        # agree = getAgree(asmo, text, new_case)                        
+                        agree = getAgree(asmo, text, new_case)
+                        outcome = getOutcome(asmo, text, new_case)
                         appendcsv(case_id, sentence_id, para_id, judge, text, role, align, agree, outcome, fieldnames)
                         # print(case_id, sentence_id, para_id, judge, text, role, align)
             judgeCount += 1
+        # #for quick testing
+        # count += 1
+        # if count == 5:
+        #     break 
 
 complete_sum()
