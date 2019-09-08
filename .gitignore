@@ -24,3 +24,7 @@ textinparbroken.csv
 ASMO_46_corpus/
 
 generated_titlepage.pdf
+
+complete_sum_backup.py
+
+complete_sum_with_nomatch.csv
