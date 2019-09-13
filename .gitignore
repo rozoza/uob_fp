@@ -28,3 +28,27 @@ generated_titlepage.pdf
 complete_sum_backup.py
 
 complete_sum_with_nomatch.csv
+
+46txt_corpus/
+
+__pycache__/
+
+comsum_corpus/
+
+lv18263-Thesis.docx
+
+lv18263-Thesis.pdf
+
+ML_Summary.xlsx
+
+ML_Summary_V2.xlsx
+
+MLdata.csv
+
+neg_expr.txt
+
+Simple_ml_report.docx
+
+Thesis.zip
+
+Treetest.py
