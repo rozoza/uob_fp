@@ -1,5 +1,5 @@
 import csv
-import sumVerbs
+import nvGroups
 
 # Cases that Oliver initially needed
 # caseList = ['1.19', '3.22', '1.11','1.55','2.21','2.3','2.35','2.45','2.47','3.02','3.08','3.1',

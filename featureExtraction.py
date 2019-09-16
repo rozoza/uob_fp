@@ -1,26 +1,7 @@
 import sklearn
 import csv
 import numpy as np
-# from sklearn.feature_extraction.text import TfidfVectorizer
 import math
-
-def getTop_tfidf():
-    path = './uob_fp/46txt_corpus/'
-    corpus = [path+"2001Apr04eastbrn-1.txt", path+"2001Dec13aib-1.txt", path+"2001Dec13smith-1.txt", path+"2001Feb08kuwait-1.txt",
-        path+"2001Feb08presto-1.txt", path+"2001Jan18intern-1.txt", path+"2001Jan31card-1.txt", path+"2001Jul05m-1.txt", path+"2001Jul12mcgra-1.txt",
-        path+"2001Jul12news-1.txt", path+"2001Jul25dan-1.txt", path+"2001Jun28norris-1.txt", path+"2001Mar08mehann-1.txt", path+"2001Mar22hallam-1.txt",
-        path+"2001May23daly-1.txt", path+"2001May23liver-1.txt", path+"2001Nov01moham-1.txt", path+"2001Oct11uratem-1.txt", path+"2001Oct25dela-1.txt",
-        path+"2002Apr18gersn-1.txt", path+"2002Apr25cave-1.txt", path+"2002Jul04graham-1.txt", path+"2002Jul25robert-1.txt", path+"2002Jul25sten-1.txt",
-        path+"2002Jun20pope-1.txt", path+"2002Jun20wngton-1.txt", path+"2002Jun27ash-1.txt", path+"2002May16morgan-1.txt", path+"2002May23burket-1.txt",
-        path+"2002Nov14byrne-1.txt", path+"2002Nov25lich-1.txt", path+"2002Oct31regina-1.txt", path+"2003Apr03green-1.txt", path+"2003Apr10bellin-1.txt",
-        path+"2003Apr10sage-1.txt", path+"2003Feb20glaz-1.txt", path+"2003Feb27diets-1.txt", path+"2003Feb27inrep-1.txt", path+"2003Jan30kanar-1.txt",
-        path+"2003Jul31moyna-1.txt", path+"2003Jul31mulkrn-1.txt", path+"2003Jun12kuwa-1.txt", path+"2003Jun12lyon-1.txt", path+"2003Mar20sepet-1.txt",
-        path+"2003Mar20sivak-1.txt", path+"2003May22john-1.txt"]
-
-    vectorizer = TfidfVectorizer(input='filename', stop_words='english', sublinear_tf=True, max_features=50)
-    ret = vectorizer.fit_transform(corpus)
-    words = vectorizer.get_feature_names()
-    return ret, words
 
 def get_end_par_in_lord(judge, case, current_paragraph):
     filename = 'comsum_' + case + '.csv'
@@ -174,11 +155,11 @@ def supervised_ml(X_train, y_train, X_test, y_test, setname):
 
 
 def storeFeatures(case_flag, sent_flag, y, agree_X, outcome_X, loc1_X, loc2_X, loc3_X, loc4_X, loc5_X, loc6_X,
-sentlen_X, qb_X, inq_X, rhet_X, tfidf_X, asp_X, modal_X, voice_X, negcue_X, tense_X, caseent_X, legalent_X, enamex_X):
+sentlen_X, qb_X, inq_X, rhet_X, tfidf_X, asp_X, modal_X, voice_X, negcue_X, tense_X, caseent_X, legalent_X, enamex_X, rhet_y):
     with open('./uob_fp/MLdata.csv', 'w', newline='') as outfile:
         fieldnames = ['case_id', 'sent_id', 'align', 'agree', 'outcome', 'loc1', 'loc2', 'loc3', 
         'loc4', 'loc5', 'loc6', 'sentlen', 'quoteblock', 'inline_q', 'rhet', 'tfidf', 'aspect', 'modal',
-        'voice', 'negation', 'tense', 'case entities', 'legal entities', 'enamex']        
+        'voice', 'negation', 'tense', 'case entities', 'legal entities', 'enamex', 'rhet_target']        
 
         writer = csv.DictWriter(outfile, fieldnames=fieldnames)
         writer.writeheader()
@@ -189,10 +170,13 @@ sentlen_X, qb_X, inq_X, rhet_X, tfidf_X, asp_X, modal_X, voice_X, negcue_X, tens
             'loc5': loc5_X[v], 'loc6': loc6_X[v], 'sentlen': sentlen_X[v], 'quoteblock': qb_X[v], 'inline_q': inq_X[v], 
             'rhet': rhet_X[v], 'tfidf': tfidf_X[v], 'aspect': asp_X[v], 'modal': modal_X[v], 'voice': voice_X[v],
             'negation': negcue_X[v], 'tense': tense_X[v], 'case entities': caseent_X[v],
-            'legal entities': legalent_X[v], 'enamex': enamex_X[v]})
+            'legal entities': legalent_X[v], 'enamex': enamex_X[v], 'rhet_target': rhet_y[v]})
 
 #Target/label
+#relevance classifier
 y = np.array([])
+#rhetorical role classifier
+rhet_y = np.array([])
 
 #List of features
 agree_X = np.array([])
@@ -447,24 +431,25 @@ with open('uob_fp/complete_sum.csv', 'r') as infile:
             outcome_X = np.hstack([outcome_X, tmp])
 
         if row['role'] == 'FACT':
-            # rhet_X = np.append(rhet_X, [2])        
+            rhet_y = np.append(rhet_y, [2])        
             rhet_X = np.append(rhet_X, [2/6])        
         if row['role'] == 'PROCEEDINGS':
-            # rhet_X = np.append(rhet_X, [3])        
+            rhet_y = np.append(rhet_y, [3])        
             rhet_X = np.append(rhet_X, [3/6])        
         if row['role'] == 'BACKGROUND':
-            # rhet_X = np.append(rhet_X, [4])        
+            rhet_y = np.append(rhet_y, [4])        
             rhet_X = np.append(rhet_X, [4/6])        
         if row['role'] == 'FRAMING':
-            # rhet_X = np.append(rhet_X, [5])        
+            rhet_y = np.append(rhet_y, [5])        
             rhet_X = np.append(rhet_X, [5/6])        
         if row['role'] == 'DISPOSAL':
-            # rhet_X = np.append(rhet_X, [6])        
+            rhet_y = np.append(rhet_y, [6])        
             rhet_X = np.append(rhet_X, [1])        
         if row['role'] == 'TEXTUAL':
-            # rhet_X = np.append(rhet_X, [1])        
+            rhet_y = np.append(rhet_y, [1])        
             rhet_X = np.append(rhet_X, [1/6])        
         if row['role'] == 'NONE':
+            rhet_y = np.append(rhet_y, [0])   
             rhet_X = np.append(rhet_X, [0])   
         # if row['role'] == 'TEXTUAL' or row['role'] == 'NONE' or row['role'] == 'BACKGROUND':
         #     rhet_X = np.append(rhet_X, [0])
@@ -476,9 +461,9 @@ with open('uob_fp/complete_sum.csv', 'r') as infile:
         # if cnt == 3:
         #     break
 
-# storeFeatures(case_flag, sent_flag, y, agree_X, outcome_X, loc1_X, loc2_X, loc3_X, loc4_X, loc5_X, loc6_X,
-# sentlen_X, qb_X, inq_X, rhet_X, tfidf_X, asp_X, modal_X, voice_X, negcue_X, tense_X, caseent_X, legalent_X, enamex_X)
-# exit()
+storeFeatures(case_flag, sent_flag, y, agree_X, outcome_X, loc1_X, loc2_X, loc3_X, loc4_X, loc5_X, loc6_X,
+sentlen_X, qb_X, inq_X, rhet_X, tfidf_X, asp_X, modal_X, voice_X, negcue_X, tense_X, caseent_X, legalent_X, enamex_X, rhet_y)
+exit()
 
 # X = np.vstack((agree_X, outcome_X, loc1_X, loc2_X, loc3_X, loc4_X, loc5_X, loc6_X, inq_X, qb_X, sentlen_X)).T
 rhet_X = np.vstack((rhet_X, loc1_X, loc2_X, loc3_X, loc4_X, loc5_X, loc6_X)).T
