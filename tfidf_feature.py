@@ -1,27 +1,5 @@
 import numpy as np
-# def tfidf(word, document, corpus):
-#     # TFIDF(w,d,D) = TF(w,d) * IDF(w,D)
 
-#     # N = the number of times the word w occurs in document d
-#     with open(document, 'r') as infile:
-#         str = infile.read().replace
-
-#     # M = the number of (all occurrences of all) words in document d
-
-#     # TF(w,d) = N / M 
-
-#     # P is the number of documents that contain the word d (at least once)
-
-#     # Q is the number of documents in the set D
-
-#     # IDF(w,D) = log (Q / P)
-
-
-# tfidf_score = {}
-
-# for word in corpus[0].split():
-#     tfidf_score.update({word : tfidf(word,corpus[0], corpus)})
-#     pass
 class tfidf_calc:
     def __init__(self):
         self.path = './uob_fp/46txt_corpus/'
@@ -36,7 +14,6 @@ class tfidf_calc:
         self.path+'3.44.txt', self.path+'3.41.txt', self.path+'3.31.txt', self.path+'3.32.txt', 
         self.path+'3.15.txt', self.path+'3.14.txt', self.path+'3.28.txt']
         from sklearn.feature_extraction.text import TfidfVectorizer
-        # self.vectorizer = TfidfVectorizer(input='filename')
         self.vectorizer = TfidfVectorizer(input='filename', stop_words='english')
         self.vectorizer.fit(self.corpus)
         self.dictionary = self.vectorizer.vocabulary_
@@ -61,14 +38,10 @@ class tfidf_calc:
         self.vector = self.vectorizer.transform([self.corpus[self.document]])
         self.tfidf_array = self.vector.toarray()
 
-        # #mean seems to be incorrect
-        # return np.mean(self.tfidf_array)
-
     def get_sent_features(self, text):
         self.textarray = text.split(' ')
         self.highest_score = 0
         # self.individual_tfidfList = []
-        # self.mean = 0
         
         for i in self.textarray:
             self.index = self.dictionary.get(i.lower())
@@ -76,7 +49,3 @@ class tfidf_calc:
                 # self.individual_tfidfList.append(self.tfidf_array[0, self.index])
                 self.highest_score = max(self.highest_score, self.tfidf_array[0, self.index])
         return self.highest_score
-        # from statistics import mean
-        # if self.highest_score != 0:
-        #     self.mean = mean(self.individual_tfidfList)
-        # return self.mean, self.highest_score

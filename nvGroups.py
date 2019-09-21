@@ -134,25 +134,4 @@ def get_noun_features(case_id, sentence_id):
                     enamex = 1
                 else:
                     enamex = 0
-            return caseent, legalent, enamex
-                
-            
-                
-                
-
-
-# for vg in root.iter('VG'):    
-#     string = ''
-#     for words in vg:
-#         if string == '':
-#             string = words.text
-#         else:
-#             string = string + ' ' + words.text
-#     if string not in verbslist:
-#         verbslist.append(string)
-
-# # print(verbslist)
-# # print(len(verbslist))
-# with open('./uob_fp/cue_phrases.txt', 'w', newline='') as outfile:
-#     for v in range(len(verbslist)):
-#         outfile.write(verbslist[v] + '\n')
+            return caseent, legalent, enamex        

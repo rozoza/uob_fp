@@ -63,97 +63,6 @@ def get_end_sent_in_par(par, case, current_sentence):
                     ret = row['sentence_id']
         return ret
 
-def flagCuephrase(text):
-    from statistics import mean
-    ret = 0
-    maximum = 1
-    minimum = 1
-    lenlist = []
-    mean_norm = 0
-    with open('./uob_fp/cue_phrases.txt', 'r') as infile:
-        for line in infile:
-            if '\n' in line:
-                line = line.replace('\n', '')
-            line_length = len(line.split(' '))
-            if line_length == 1:
-                line = ' ' + line + ' '
-            lenlist.append(line_length)
-            maximum = max(maximum, line_length)
-            minimum = min(minimum, line_length)
-            if line in text:
-                if line_length > ret:
-                    ret = line_length
-        if ret == 0:
-            return 1
-        mean_norm = (1 - (ret - mean(lenlist)) / (maximum - minimum))/2
-        return mean_norm
-
-def classifier_performance(X_train, y_train, X_test, y_test, classifier, clf_name):
-    classifier.fit(X_train, y_train)
-    predictions = classifier.predict(X_test)
-
-    # # Visualize Decision Tree
-    # from sklearn.tree import export_graphviz
-
-    # # Creates dot file named tree.dot
-    # export_graphviz(
-    #         classifier,
-    #         out_file =  "output.dot",
-    #         feature_names = ['agree_X', 'outcome_X', 'loc1_X', 'loc2_X', 'loc3_X', 'loc4_X', 'loc5_X', 'loc6_X', 'inq_X', 'qb_X', 'sentlen_X', 'rhet_X'],
-    #         class_names = ['align_0', 'align_1'],
-    #         filled = True,
-    #         rounded = True)
-    
-    # from subprocess import check_call
-    # check_call(['dot','-Tpng','output.dot','-o','output.png'])
-    # import pydot
-
-    # (graph,) = pydot.graph_from_dot_file('output.dot')
-    # graph.write_png('output.png')
-    
-    y_true = y_test
-    y_pred = predictions
-    from sklearn.metrics import recall_score
-    # recall = recall_score(y_true, y_pred, average='weighted', labels=np.unique(y_pred))
-    recall = recall_score(y_true, y_pred, average='binary', labels=np.unique(y_pred))
-    from sklearn.metrics import precision_score
-    # precision = precision_score(y_true, y_pred, average='weighted', labels=np.unique(y_pred))
-    precision = precision_score(y_true, y_pred, average='binary', labels=np.unique(y_pred))
-    from sklearn.metrics import f1_score
-    # f_score = f1_score(y_true, y_pred, average='weighted', labels=np.unique(y_pred))
-    f_score = f1_score(y_true, y_pred, average='binary', labels=np.unique(y_pred))
-
-    print('-----------', clf_name, '-----------')
-    print('precision_score:', precision)
-    print('recall_score:', recall)
-    print('f1_score:', f_score)
-
-def supervised_ml(X_train, y_train, X_test, y_test, setname):
-    print('+++++++++++', setname, '+++++++++++')
-    # from sklearn.naive_bayes import ComplementNB
-    # compNB_clf = ComplementNB()
-    # classifier_performance(X_train, y_train, X_test, y_test, compNB_clf, 'compNB_clf')
-
-    # from sklearn.linear_model import LogisticRegression
-    # LR_clf = LogisticRegression(class_weight='balanced', solver='liblinear', multi_class='auto')
-    # classifier_performance(X_train, y_train, X_test, y_test, LR_clf, 'LR_clf')
-
-    from sklearn.svm import SVC
-    # SVC_clf = SVC(gamma='scale', decision_function_shape='ovo')
-    SVC_clf = SVC(gamma='scale', class_weight='balanced', decision_function_shape='ovo')
-    classifier_performance(X_train, y_train, X_test, y_test, SVC_clf, 'SVC_clf')
-
-    from sklearn.tree import DecisionTreeClassifier
-    DTC_clf = DecisionTreeClassifier(max_features=None, class_weight='balanced', max_depth=None, min_samples_leaf=1)
-    # DTC_clf = DecisionTreeClassifier(max_features=None, max_depth=None, min_samples_leaf=1)
-    classifier_performance(X_train, y_train, X_test, y_test, DTC_clf, 'DTC_clf')
-
-    # from sklearn.neighbors import KNeighborsClassifier
-    # KN_clf = KNeighborsClassifier(algorithm='auto')
-    # classifier_performance(X_train, y_train, X_test, y_test, KN_clf, 'KN_clf')
-    print('+++++++++++', 'DONE', '+++++++++++')
-
-
 def storeFeatures(case_flag, sent_flag, y, agree_X, outcome_X, loc1_X, loc2_X, loc3_X, loc4_X, loc5_X, loc6_X,
 sentlen_X, qb_X, inq_X, rhet_X, tfidf_X, asp_X, modal_X, voice_X, negcue_X, tense_X, caseent_X, legalent_X, enamex_X, rhet_y):
     with open('./uob_fp/MLdata.csv', 'w', newline='') as outfile:
@@ -173,9 +82,9 @@ sentlen_X, qb_X, inq_X, rhet_X, tfidf_X, asp_X, modal_X, voice_X, negcue_X, tens
             'legal entities': legalent_X[v], 'enamex': enamex_X[v], 'rhet_target': rhet_y[v]})
 
 #Target/label
-#relevance classifier
+#relevance target
 y = np.array([])
-#rhetorical role classifier
+#rhetorical role target
 rhet_y = np.array([])
 
 #List of features
@@ -187,7 +96,6 @@ sentlen_X = np.array([])
 qb_X = np.array([])
 inq_X = np.array([])
 rhet_X = np.array([])
-# neg_X = np.array([])
 
 #for cue phrase feature-set
 asp_X = np.array([])
@@ -202,10 +110,8 @@ caseent_X = np.array([])
 legalent_X = np.array([])
 enamex_X = np.array([])
 
-#mat_tfidf useless at the moment
 import tfidf_feature
 tfidf = tfidf_feature.tfidf_calc()
-# mat_tfidf, top_tfidf = getTop_tfidf()
 tfidf_X = np.array([])
 
 #for storing Xs values
@@ -277,43 +183,15 @@ with open('uob_fp/complete_sum.csv', 'r') as infile:
             tense_X = np.append(tense_X, [1/4])
         else:
             tense_X = np.append(tense_X, [0])
-        # cue_X = np.append(cue_X, [flagCuephrase(row['text'])])
 
         caseent, legalent, enamex = nvGroups.get_noun_features(row['case_id'], row['sentence_id'])
         caseent_X = np.append(caseent_X, [caseent])
         legalent_X = np.append(legalent_X, [legalent])
         enamex_X = np.append(enamex_X, [enamex])
 
-        # for v in range(len(top_tfidf)):
-        #     if top_tfidf[v] in row['text']:
-        #         hastopw = 1
-        #         break
-        #     else:
-        #         hastopw = 0
         tfidf.get_doc(row['case_id'])
         sent_max_tfidf = tfidf.get_sent_features(row['text'])
         tfidf_X = np.append(tfidf_X, [sent_max_tfidf])
-        # sent_avg_tfidf, sent_max_tfidf = tfidf.get_sent_features(row['text'])
-        # tfidf_X = np.append(tfidf_X, [sent_avg_tfidf])
-        # if sent_max_tfidf >= doc_avg_tfidf:
-        #     tfidf_X = np.append(tfidf_X, [1])
-        # else:
-        #     tfidf_X = np.append(tfidf_X, [0])
-        # tfidf_X = np.append(tfidf_X, [hastopw])
-
-        # fh = open('./uob_fp/neg_expr.txt')
-        # for line in fh:
-        #     line = line.replace('\n', '')
-        #     line_length = len(line.split(' '))
-        #     if line_length == 1:
-        #         line = ' ' + line + ' '
-        #     if line in row['text']:
-        #         neg_val = 1
-        #         break
-        #     else:
-        #         neg_val = 0
-        # fh.close()
-        # neg_X = np.append(neg_X, [neg_val])
 
         tmptxt = row['text'].split()
         if '.5' in row['para_id']:
@@ -451,10 +329,6 @@ with open('uob_fp/complete_sum.csv', 'r') as infile:
         if row['role'] == 'NONE':
             rhet_y = np.append(rhet_y, [0])   
             rhet_X = np.append(rhet_X, [0])   
-        # if row['role'] == 'TEXTUAL' or row['role'] == 'NONE' or row['role'] == 'BACKGROUND':
-        #     rhet_X = np.append(rhet_X, [0])
-        # else:
-        #     rhet_X = np.append(rhet_X, [1])
         
         # #for quick test
         # cnt +=1
@@ -463,77 +337,3 @@ with open('uob_fp/complete_sum.csv', 'r') as infile:
 
 storeFeatures(case_flag, sent_flag, y, agree_X, outcome_X, loc1_X, loc2_X, loc3_X, loc4_X, loc5_X, loc6_X,
 sentlen_X, qb_X, inq_X, rhet_X, tfidf_X, asp_X, modal_X, voice_X, negcue_X, tense_X, caseent_X, legalent_X, enamex_X, rhet_y)
-exit()
-
-# X = np.vstack((agree_X, outcome_X, loc1_X, loc2_X, loc3_X, loc4_X, loc5_X, loc6_X, inq_X, qb_X, sentlen_X)).T
-rhet_X = np.vstack((rhet_X, loc1_X, loc2_X, loc3_X, loc4_X, loc5_X, loc6_X)).T
-# rhet_X = rhet_X.reshape(-1, 1)
-asmo_X = np.vstack((agree_X, outcome_X, loc1_X, loc2_X, loc3_X, loc4_X, loc5_X, loc6_X)).T
-# asmo_X = np.vstack((agree_X, outcome_X)).T
-# loc_X = np.vstack((loc1_X, loc2_X, loc5_X, loc6_X)).T
-loc_X = np.vstack((loc1_X, loc2_X, loc3_X, loc4_X, loc5_X, loc6_X)).T
-quo_X = np.vstack((inq_X, qb_X, loc1_X, loc2_X, loc3_X, loc4_X, loc5_X, loc6_X)).T
-# quo_X = np.vstack((inq_X, qb_X)).T
-sentlen_X = np.vstack((sentlen_X, loc1_X, loc2_X, loc3_X, loc4_X, loc5_X, loc6_X)).T
-# sentlen_X = sentlen_X.reshape(-1, 1)
-# neg_X = neg_X.reshape(-1, 1)
-tfidf_X = np.vstack((tfidf_X, loc1_X, loc2_X, loc3_X, loc4_X, loc5_X, loc6_X)).T
-# tfidf_X = tfidf_X.reshape(-1, 1)
-cue_X = np.vstack((asp_X, modal_X, voice_X, negcue_X, tense_X, loc1_X, loc2_X, loc3_X, loc4_X, loc5_X, loc6_X)).T
-# cue_X = np.vstack((asp_X, modal_X, voice_X, negcue_X, tense_X)).T
-# cue_X = cue_X.reshape(-1, 1)
-ent_X = np.vstack((legalent_X, enamex_X, loc1_X, loc2_X, loc3_X, loc4_X, loc5_X, loc6_X)).T
-# ent_X = np.vstack((legalent_X, enamex_X)).T
-# ent_X = np.vstack((caseent_X, legalent_X, enamex_X)).T
-
-# for v in range(len(y)):
-#     print(y[v], rhet_X[v])
-# from sklearn import preprocessing
-# bindata = preprocessing.Binarizer
-# X = np.vstack((agree_X, outcome_X, loc1_X, loc2_X, loc3_X, loc4_X, loc5_X, loc6_X )).T
-
-# ML train and test
-# from sklearn.model_selection import cross_val_score
-# from sklearn.naive_bayes import ComplementNB
-# compNB_clf = ComplementNB()
-# print('ASMO compNB_clf: ', cross_val_score(compNB_clf, asmo_X, y, cv=10, scoring='f1').mean())
-# print('location compNB_clf: ', cross_val_score(compNB_clf, loc_X, y, cv=10, scoring='f1').mean())
-# print('cumulative NB_clf: ', cross_val_score(compNB_clf, X, y, cv=10, scoring='f1').mean())
-# from sklearn.linear_model import LogisticRegression
-# LR_clf = LogisticRegression(class_weight='balanced', solver='liblinear', multi_class='auto')
-# print('ASMO LR_clf: ', cross_val_score(LR_clf, asmo_X, y, cv=10, scoring='f1').mean())
-# print('location LR_clf: ', cross_val_score(LR_clf, loc_X, y, cv=10, scoring='f1').mean())
-# print('cumulative LR_clf: ', cross_val_score(LR_clf, X, y, cv=10, scoring='f1').mean())
-# from sklearn.svm import SVC
-# SVC_clf = SVC(class_weight='balanced', gamma='auto')
-# print('ASMO SVC_clf: ', cross_val_score(SVC_clf, asmo_X, y, cv=10, scoring='f1').mean())
-# print('location SVC_clf: ', cross_val_score(SVC_clf, loc_X, y, cv=10, scoring='f1').mean())
-# print('cumulative SVC_clf: ', cross_val_score(SVC_clf, X, y, cv=10, scoring='f1').mean())
-# from sklearn.tree import DecisionTreeClassifier
-# DTC_clf = DecisionTreeClassifier(max_features='auto', class_weight='balanced')
-# print('ASMO DTC_clf: ', cross_val_score(DTC_clf, asmo_X, y, cv=10, scoring='f1').mean())
-# print('location DTC_clf: ', cross_val_score(DTC_clf, loc_X, y, cv=10, scoring='f1').mean())
-# print('cumulative DTC_clf: ', cross_val_score(DTC_clf, X, y, cv=10, scoring='f1').mean())
-
-
-from sklearn.model_selection import train_test_split
-X_train, X_test, y_train, y_test = train_test_split(asmo_X, y, random_state=42, shuffle=True, test_size = .1)
-supervised_ml(X_train, y_train, X_test, y_test, 'asmo_individual')
-# X_train, X_test, y_train, y_test = train_test_split(loc_X, y, random_state=42, shuffle=True, test_size = .1)
-# supervised_ml(X_train, y_train, X_test, y_test, 'location_individual')
-X_train, X_test, y_train, y_test = train_test_split(sentlen_X, y, random_state=42, shuffle=True, test_size = .1)
-supervised_ml(X_train, y_train, X_test, y_test, 'sent_len_individual')
-X_train, X_test, y_train, y_test = train_test_split(quo_X, y, random_state=42, shuffle=True, test_size = .1)
-supervised_ml(X_train, y_train, X_test, y_test, 'quotation_individual')
-# X_train, X_test, y_train, y_test = train_test_split(neg_X, y, random_state=42, shuffle=True, test_size = .1)
-# supervised_ml(X_train, y_train, X_test, y_test, 'neg_expr_individual')
-X_train, X_test, y_train, y_test = train_test_split(tfidf_X, y, random_state=42, shuffle=True, test_size = .1)
-supervised_ml(X_train, y_train, X_test, y_test, 'tfidf_individual')
-X_train, X_test, y_train, y_test = train_test_split(cue_X, y, random_state=42, shuffle=True, test_size = .1)
-supervised_ml(X_train, y_train, X_test, y_test, 'cue_individual')
-X_train, X_test, y_train, y_test = train_test_split(ent_X, y, random_state=42, shuffle=True, test_size = .1)
-supervised_ml(X_train, y_train, X_test, y_test, 'ent_individual')
-X_train, X_test, y_train, y_test = train_test_split(rhet_X, y, random_state=42, shuffle=True, test_size = .1)
-supervised_ml(X_train, y_train, X_test, y_test, 'rhetorical_individual')
-# X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42, shuffle=True, test_size = .1)
-# supervised_ml(X_train, y_train, X_test, y_test, 'cumulative')
