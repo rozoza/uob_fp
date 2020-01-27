@@ -31,10 +31,14 @@ def getCase_id(tree):
         case_num = '0' + case_ref[length-1]
     else: 
         case_num = case_ref[length-2:length]
+    if case_num[-1] == '0':
+        case_num = case_num[:-1]
         
     #get the last two digits of year by iterating through year block 
     # e.g. [2002]
     case_year = case_ref[(case_ref.index(']')-2):case_ref.index(']')]
+    if case_year[0] == '0':
+        case_year = case_year[1]
 
     case_id = case_year + '.' + case_num
 
@@ -136,10 +140,20 @@ def textReplace(text):
         text = text.replace('~~#228;', 'ä')
     while '~~#163;' in text:
         text = text.replace('~~#163;', '#')
-    if 'Subjectto' in text:
+    while 'Subjectto' in text:
         text = text.replace('Subjectto', 'Subject to')
-    if 'inaccordancewith' in text:
+    while 'subjectto' in text:
+        text = text.replace('subjectto', 'subject to')
+    while 'Inaccordancewith' in text:
+        text = text.replace('Inaccordancewith', 'In accordance with')
+    while 'inaccordancewith' in text:
         text = text.replace('inaccordancewith', 'in accordance with')
+    while 'Bywayof' in text:
+        text = text.replace('Bywayof', 'By way of')
+    while 'bywayof' in text:
+        text = text.replace('bywayof', 'by way of')
+    while '~~#189;' in text:
+        text = text.replace('~~#189;', '1/2')
     return text
 
 def adjustText(text):
@@ -152,148 +166,99 @@ def adjustText(text):
     while ']' in text:
         text = text.replace(']', '-RSB-')
     return text
-         
-def getAsmo(asmo, text, new_case):
+
+def fetch_asmoval(asmo, checkpoint):
+    with open('./uob_fp/consensus_asmo.csv', 'r') as infile:
+        reader = csv.DictReader(infile)
+
+        fullagr = "NONE"
+        outcome = "NONE"
+        ackn = "NONE"
+        for row in reader:
+            if row['case'] == asmo:
+                if row['line'] == checkpoint:
+                    if row['line'] == '0':
+                        fullagr = row['to']
+                        return fullagr, outcome, ackn
+                    if row['relation'] == 'fullagr':
+                        fullagr = row['to']
+                    if row['relation'] == 'outcome':
+                        outcome = row['to']
+                    if row['relation'] == 'ackn':
+                        ackn = row['to']
+        return fullagr, outcome, ackn
+
+def getAsmo(asmo, text, new_case, checked):
     filename = 'asmo_' + asmo + '.csv'
-    with open('./uob_fp/ASMO_46_corpus/' + filename) as infile:
+    with open('./uob_fp/ASMO_68_corpus/' + filename) as infile:
         reader = csv.DictReader(infile)
         
-        asmoret = []
         match = False
-        findoutcome = False
-        retset= []
-        agrret = ''
+        full_match = False
         no_punct = ''
         text = adjustText(text)
         for char in text:
             if char not in string.punctuation:
                 no_punct = no_punct + char
         no_punct = no_punct.replace(' ', '')
+        no_punct = no_punct.lower()
 
         for row in reader:
             if new_case == True:
-                majority = row['mj']
-                majority = majority.replace(', ', '+')
-                return majority, 'no'
-
+                agrret, outret, acknret = fetch_asmoval(asmo, '0')
+                return agrret, outret, acknret, checked
+            #     majority = row['mj']
+            #     majority = majority.replace(', ', '+')
+            #     return majority, 'no', 'NONE', checked
             no_punct2 = ''
+            
+            if int(row['line']) < checked:
+                continue
+            else:
+                checkpoint = int(row['line'])
+
             for char in row['body']:
                 if char not in string.punctuation:
                     no_punct2 = no_punct2 + char
             if 'UnterhaltungsgerÃ¤te' in no_punct2:
-                no_punct2 = no_punct2.replace('UnterhaltungsgerÃ¤te', 'Unterhaltungsgeräte')
+                no_punct2 = no_punct2.replace('UnterhaltungsgerÃ¤te', 'Unterhaltungsgeräte')        
             no_punct2 = no_punct2.replace(' ', '')
-            
-            if no_punct in no_punct2:
-                if row['relation'] == 'fullagr' and match == False:
-                    match = True
-                    retset.append(row['to'])
-                elif row['relation'] == 'fullagr' and match == True:
-                    retset.append(row['to'])
-                elif row['relation'] != 'fullagr' and match == True:
-                    if len(retset) == 1:
-                        agrret = ''.join(retset)
-                        findoutcome = True
-                        # return ret
-                    else:
-                        majority = row['mj']
-                        majority = majority.split(', ')
-                        cnt = 0
-                        for v in range(len(majority)):
-                            for s in range(len(retset)):
-                                if retset[s] == majority[v]:
-                                    cnt += 1
-                        if cnt == len(majority):
-                            agrret = '+'.join(majority)
-                            findoutcome = True
-                            # return ret
-                        agrret = '+'.join(retset)
-                        findoutcome = True
-                        # return ret
-                else:
-                    agrret = 'NONE'
-                    # return 'NONE'
-                if row['relation'] == 'outcome' and findoutcome == True and match == True:
-                    outret = 'yes'
-                    asmoret = [agrret, outret]
-                    return asmoret 
-                    # return agrret, outret
-                elif row['relation'] != 'outcome' and findoutcome == True and match == True:
-                    outret = 'no'
-                    asmoret = [agrret, outret]
-                    return asmoret 
-                    # return agrret, outret
-                elif row['relation'] == 'outcome' and match == False:
-                    outret = 'yes'
-                    asmoret = [agrret, outret]
-                    return asmoret 
-                    # return agrret, outret
-                elif row['relation'] != 'outcome' and match == False:
-                    outret = 'no'
-                    asmoret = [agrret, outret]
-                    return asmoret 
-                    # return agrret, outret
-            else:
-                seq = difflib.SequenceMatcher(None, no_punct, no_punct2).ratio()
-                if seq > 0.8:
-                    if row['relation'] == 'fullagr' and match == False:
-                        match = True
-                        retset.append(row['to'])
-                    elif row['relation'] == 'fullagr' and match == True:
-                        retset.append(row['to'])
-                    elif row['relation'] != 'fullagr' and match == True:
-                        if len(retset) == 1:
-                            agrret = ''.join(retset)
-                            findoutcome = True
-                            # return ret
-                        else:
-                            majority = row['mj']
-                            majority = majority.split(', ')
-                            cnt = 0
-                            for v in range(len(majority)):
-                                for s in range(len(retset)):
-                                    if retset[s] == majority[v]:
-                                        cnt += 1
-                            if cnt == len(majority):
-                                agrret = '+'.join(majority)
-                                findoutcome = True
-                                # return ret
-                            agrret = '+'.join(retset)
-                            findoutcome = True
-                            # return ret
-                    else:
-                        agrret = 'NONE'
-                        # return 'NONE'
-                    if row['relation'] == 'outcome' and findoutcome == True and match == True:
-                        outret = 'yes' 
-                        asmoret = [agrret, outret]
-                        return asmoret 
-                        # return agrret, outret
-                    elif row['relation'] != 'outcome' and findoutcome == True and match == True:
-                        outret = 'no'
-                        asmoret = [agrret, outret]
-                        return asmoret 
-                        # return agrret, outret
-                    elif row['relation'] == 'outcome' and match == False:
-                        outret = 'yes'
-                        asmoret = [agrret, outret]
-                        return asmoret 
-                        # return agrret, outret
-                    elif row['relation'] != 'outcome' and match == False:
-                        outret = 'no'
-                        asmoret = [agrret, outret]
-                        return asmoret 
-                        # return agrret, outret
-        return 'no match', 'no match'
+            no_punct2 = no_punct2.lower()
 
-def appendcsv(case_id, sentence_id, para_id, judge, text, role, align, agree, outcome, fieldnames):
+            if full_match == False:
+                if no_punct == no_punct2:
+                    full_agrret, full_outret, full_acknret = fetch_asmoval(asmo, str(checkpoint))
+                    full_match = True
+                    save_full_checkpoint = checkpoint
+                    # return agrret, outret, acknret, checkpoint
+            
+            seq = difflib.SequenceMatcher(None, no_punct, no_punct2).ratio()
+            if match == False:
+                if no_punct in no_punct2 or seq > 0.8:
+                    agrret, outret, acknret = fetch_asmoval(asmo, str(checkpoint))
+                    match = True
+                    save_checkpoint = checkpoint
+        
+        if full_match == True and match == True:
+            if save_checkpoint < save_full_checkpoint:
+                return agrret, outret, acknret, save_checkpoint
+            else:
+                return full_agrret, full_outret, full_acknret, save_full_checkpoint
+        if full_match == True:
+            return full_agrret, full_outret, full_acknret, save_full_checkpoint
+        if match == True:
+            return agrret, outret, acknret, save_checkpoint
+
+        return 'no match', 'no match', 'no match', 'no match'
+
+def appendcsv(case_id, asmo, asmo_sent, sentence_id, para_id, judge, text, role, align, agree, outcome, ackn, fieldnames):
     # with open('./uob_fp/test.csv', 'a', newline='') as out_file: #for quick testing
     with open('./uob_fp/complete_sum.csv', 'a', newline='') as out_file:
         csv_writer = csv.DictWriter(out_file, fieldnames=fieldnames)
         
-        csv_writer.writerow({'case_id' : case_id, 'sentence_id' : sentence_id, 'para_id' : para_id, 'judge' : judge, 
+        csv_writer.writerow({'case_id' : case_id, 'asmo': asmo, 'asmo_sent_id': asmo_sent, 'sentence_id' : sentence_id, 'para_id' : para_id, 'judge' : judge, 
                             'text' : text, 'role' : role, 'align' : align, 
-                            'agree' : agree, 'outcome' : outcome})
+                            'agree' : agree, 'outcome' : outcome, 'ackn': ackn})
 
 def complete_sum():
     corpusList = ["2001Apr04eastbrn-1.ling.xml", "2001Dec13aib-1.ling.xml", "2001Dec13smith-1.ling.xml", "2001Feb08kuwait-1.ling.xml",
@@ -318,7 +283,23 @@ def complete_sum():
     'N/A', '60', '49', '56', '66',
     '68', '52', '53']
 
-    fieldnames = ['case_id', 'sentence_id', 'para_id', 'judge', 'text', 'role', 'align', 'agree', 'outcome']
+    import os
+
+    directory = os.fsencode('./uob_fp/SUM_2004_corpus/')
+
+    for file in os.listdir(directory):
+        filename = os.fsdecode(file)
+        
+        if filename not in corpusList:
+            with open('./uob_fp/corpus_list.csv', 'r') as corplist_file:
+                corp_reader = csv.DictReader(corplist_file)
+                
+                for row in corp_reader:
+                    if filename == row['SUM69']:
+                        corpusList.append(row['SUM69'])
+                        asmoCase.append(row['ASMO'])
+
+    fieldnames = ['case_id', 'asmo', 'asmo_sent_id', 'sentence_id', 'para_id', 'judge', 'text', 'role', 'align', 'agree', 'outcome', 'ackn']
     # with open('./uob_fp/test.csv', 'w', newline='') as new_file: #for quick testing
     with open('./uob_fp/complete_sum.csv', 'w', newline='') as new_file:
 
@@ -331,7 +312,7 @@ def complete_sum():
         if corpusList[v] == "2003Jan30regina-1.ling.xml":
             continue
 
-        tree =  ET.parse('./uob_fp/SUM_2005_corpus/' + corpusList[v])
+        tree =  ET.parse('./uob_fp/SUM_69_corpus/' + corpusList[v])
         root = tree.getroot()
         hdr = tree.findall('HDR/')
         body = tree.findall('BODY/')
@@ -339,6 +320,9 @@ def complete_sum():
 
         new_case = True
         case_id = getCase_id(tree)
+        if asmoCase[v] == '17':
+            case_id = '1.55'
+
         sentence_id = '0'
         par_dp = False
         para_id = '0'
@@ -347,6 +331,8 @@ def complete_sum():
         text = ''
         agree = ''
         outcome = ''
+        ackn = ''
+        checkpoint = 0
         
         judgeList = []
         judge_full = ''
@@ -363,9 +349,14 @@ def complete_sum():
 
         for lords in body:
             if lords.tag == 'LORD':
+                checkpoint += 1
                 judge_full = judgeList[judgeCount]
                 judge_full = judge_full.split()
-                judge = judge_full[1].lower() #take the string after Lord
+                for word in judge_full:
+                    if word.lower() == 'lord' or word.lower() == 'lady':
+                        judge = judge_full[judge_full.index(word)+1].lower()
+                        if '-' in judge:
+                            judge = judge.split('-')[0]
                 if judge == 'chancellor':
                     for paragraphs in lords:
                         for sentences in paragraphs:
@@ -397,19 +388,27 @@ def complete_sum():
                                 align = getAlign(sentences)
                                 text = getText(sentences)
                                 text = textReplace(text)
-                                asmoval = getAsmo(asmo, text, new_case)
+                                asmoval = getAsmo(asmo, text, new_case, checkpoint)
                                 agree = asmoval[0]
                                 outcome = asmoval[1]
-                                appendcsv(case_id, sentence_id, para_id, judge, text, role, align, agree, outcome, fieldnames)
+                                ackn = asmoval[2]
+                                if asmoval[3] == 'no match':
+                                    asmo_sent = asmoval[3]
+                                else:
+                                    asmo_sent = str(asmoval[3])
+                                    checkpoint = asmoval[3]
+                                appendcsv(case_id, asmo, asmo_sent, sentence_id, para_id, judge, text, role, align, agree, outcome, ackn, fieldnames)
                                 # print(case_id, sentence_id, para_id, judge, text, role, align)
                     #print('end of quoteblock')
     
                 for sentences in paragraphs:
                     if sentences.tag == 'W':
                         sentence_id = 'N/A'
+                        asmo_sent = 'N/A'
                         align = 'NONE'
                         agree = 'NONE'
-                        outcome = 'no'
+                        outcome = 'NONE'
+                        ackn = 'NONE'
                         if sentences.attrib.get('P') == None:
                             role = '<prep-date>'  
                             text = sentences.text
@@ -428,17 +427,26 @@ def complete_sum():
                         # else:
                         #     text = sentences.text
                         if textpar_bool == False:
-                            appendcsv(case_id, sentence_id, para_id, judge, text, role, align, agree, outcome, fieldnames)
+                            appendcsv(case_id, asmo, asmo_sent, sentence_id, para_id, judge, text, role, align, agree, outcome, ackn, fieldnames)
                     
                     if new_case == True:
                         #para_id = '0'
                         text = getRef(tree)
-                        asmoval = getAsmo(asmo, text, new_case)
+                        if asmoCase[v] == '17':
+                            text = '[2001] UKHL 55'
+
+                        asmoval = getAsmo(asmo, text, new_case, checkpoint)
                         agree = asmoval[0]
                         outcome = asmoval[1]
+                        ackn = asmoval[2]
+                        if asmoval[3] == 'no match':
+                            asmo_sent = asmoval[3]
+                        else:
+                            asmo_sent = str(asmoval[3])
+                            checkpoint = asmoval[3]
                         tmp = judge
                         judge = 'NONE'
-                        appendcsv(case_id, sentence_id, para_id, judge, text, role, align, agree, outcome, fieldnames)
+                        appendcsv(case_id, asmo, asmo_sent, sentence_id, para_id, judge, text, role, align, agree, outcome, ackn, fieldnames)
                         # print(case_id, '0', '0', 'NONE', text, '<new-case>', 'NONE')
                         new_case = False
                         judge = tmp
@@ -455,13 +463,19 @@ def complete_sum():
                         else:
                             text = getText(sentences)
                             text = textReplace(text)
-                        asmoval = getAsmo(asmo, text, new_case)
+                        asmoval = getAsmo(asmo, text, new_case, checkpoint)
                         agree = asmoval[0]
                         outcome = asmoval[1]
-                        appendcsv(case_id, sentence_id, para_id, judge, text, role, align, agree, outcome, fieldnames)
+                        ackn = asmoval[2]
+                        if asmoval[3] == 'no match':
+                            asmo_sent = asmoval[3]
+                        else:
+                            asmo_sent = str(asmoval[3])
+                            checkpoint = asmoval[3]
+                        appendcsv(case_id, asmo, asmo_sent, sentence_id, para_id, judge, text, role, align, agree, outcome, ackn, fieldnames)
                         # print(case_id, sentence_id, para_id, judge, text, role, align)
             judgeCount += 1
-        #for quick testing
+        # # for quick testing
         # count += 1
         # if count == 1:
         #     break 

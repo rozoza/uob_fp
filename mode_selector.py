@@ -1,25 +1,38 @@
 class mode_selector:
-    def __init__(self, location, quotation, entities, asmo,
-    cue_phrase, sent_length, tfidf, rhet_role, rhet_y, rel_y):
+    def __init__(self, location, HGlocation, quotation, entities, asmo,
+        cue_phrase, sent_length, HGsent_length, tfidf_max, tfidf_top20, tfidf_HGavg, rhet_role, 
+        wordlist, pasttense, rhet_y, rel_y):
         self.feature_dict = {
             1 : location,
-            2 : quotation,
-            3 : entities,
-            4 : asmo,
-            5 : cue_phrase,
-            6 : sent_length,
-            7 : tfidf,
-            8 : rhet_role
+            2 : HGlocation,
+            3 : quotation,
+            4 : entities,
+            5 : asmo,
+            6 : cue_phrase,
+            7 : sent_length,
+            8 : HGsent_length,
+            9 : tfidf_max,
+            10 : tfidf_top20,
+            11 : tfidf_HGavg,
+            12 : rhet_role,
+            13 : wordlist,
+            14 : pasttense
         }
         self.feature_opt = {
             'location' : 1,
-            'quotation' : 2,
-            'entities' : 3,
-            'asmo' : 4,
-            'cue_phrase' : 5,
-            'sent_length' : 6,
-            'tfidf' : 7,
-            'rhet_role' : 8
+            'HGlocation' : 2,
+            'quotation' : 3,
+            'entities' : 4,
+            'asmo' : 5,
+            'cue_phrase' : 6,
+            'sent_length' : 7,
+            'HGsent_length' : 8,
+            'tfidf_max' : 9,
+            'tfidf_top20' : 10,
+            'tfidf_HGavg' : 11,
+            'rhet_role' : 12,
+            'wordlist' : 13,
+            'pasttense' : 14
         }
         self.target_dict = {
             1 : rhet_y,
@@ -31,10 +44,10 @@ class mode_selector:
         }
         from sklearn.tree import DecisionTreeClassifier
         bin_DTC = DecisionTreeClassifier(max_features=None, class_weight='balanced', max_depth=None, min_samples_leaf=1)
-        multi_DTC = DecisionTreeClassifier(max_features=None, max_depth=None, min_samples_leaf=1)
+        multi_DTC = DecisionTreeClassifier(criterion='gini', max_features=None, max_depth=None, min_samples_split=2, min_samples_leaf=1, min_weight_fraction_leaf=0)
         from sklearn.svm import SVC
         bin_SVC = SVC(C=1.0, kernel='rbf', degree=3, gamma='scale', class_weight='balanced', decision_function_shape='ovr')
-        multi_SVC = SVC(C=1.0, kernel='rbf', gamma='scale', decision_function_shape='ovo')
+        multi_SVC = SVC(C=1.0, kernel='rbf',degree=3, gamma='scale', decision_function_shape='ovo')
         from sklearn.linear_model import LogisticRegression
         bin_LR = LogisticRegression(class_weight='balanced', solver='liblinear', multi_class='ovr')
         multi_LR = LogisticRegression(solver='lbfgs', multi_class='multinomial', max_iter=1000)

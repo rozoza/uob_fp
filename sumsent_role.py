@@ -17,7 +17,7 @@ caseList = ['1.19', '1.63', '1.68', 'NA',
 '3.44', '3.41', '3.31', '3.32', 
 '3.15', '3.14', '3.28']
 
-missingdict = sumVerbs.count()
+missingdict = nvGroups.count()
 for v in range(len(caseList)):
     filename = caseList[v]
     with open('./uob_fp/comsum_corpus/comsum_' + filename + '.csv', 'r') as infile:

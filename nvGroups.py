@@ -1,4 +1,5 @@
 import xml.etree.ElementTree as ET
+import csv
 
 corpusList = ["2001Apr04eastbrn-1.ling.xml", "2001Dec13aib-1.ling.xml", "2001Dec13smith-1.ling.xml", "2001Feb08kuwait-1.ling.xml",
     "2001Feb08presto-1.ling.xml", "2001Jan18intern-1.ling.xml", "2001Jan31card-1.ling.xml", "2001Jul05m-1.ling.xml", "2001Jul12mcgra-1.ling.xml",
@@ -33,6 +34,23 @@ caseList = ['1.19', '1.63', '1.68', 'NA',
 'N/A', '3.44', '3.41', '3.31', '3.32', 
 '3.15', '3.14', '3.28']
 
+def get_case_id(asmo):
+    with open('./uob_fp/complete_sum.csv', 'r') as infile:
+        reader = csv.DictReader(infile)
+
+        for row in reader:
+            if row['asmo'] == asmo:
+                return row['case_id']
+
+with open('./uob_fp/corpus_list.csv', 'r') as infile:
+    reader = csv.DictReader(infile)
+
+    for row in reader:
+        if row['ASMO'] not in asmoCase and row['ASMO'] != '0':
+            asmoCase.append(row['ASMO'])
+            corpusList.append(row['SUM69'])
+            caseList.append(get_case_id(row['ASMO']))
+
 def count():
     typedict = {}
     for v in range(len(corpusList)):
@@ -40,7 +58,7 @@ def count():
             continue
 
         count = 0
-        tree = ET.parse('./uob_fp/SUM_2005_corpus/' + corpusList[v])
+        tree = ET.parse('./uob_fp/SUM_69_corpus/' + corpusList[v])
         root = tree.getroot()
         verbslist = []
         # print([elem.tag for elem in root.iter('VG')])
@@ -55,7 +73,7 @@ def verb_attributes_values():
     for v in range(len(corpusList)):
         if corpusList[v] == "2003Jan30regina-1.ling.xml":
             continue
-        tree = ET.parse('./uob_fp/SUM_2005_corpus/' + corpusList[v])
+        tree = ET.parse('./uob_fp/SUM_69_corpus/' + corpusList[v])
         root = tree.getroot()
         modalList = []
         aspList = []
@@ -89,30 +107,41 @@ def get_verb_features(case_id, sentence_id):
     if case_id == 'N/A':
         case_id = 'NA'
     index = caseList.index(case_id)
-    tree = ET.parse('./uob_fp/SUM_2005_corpus/' + corpusList[index])
+    tree = ET.parse('./uob_fp/SUM_69_corpus/' + corpusList[index])
     root = tree.getroot()
     aspect = None
     modal = None
     voice = None
     negation = None
     tense = None
+    pasttense = 0
     for sent in root.iter('SENT'):
         if sent.attrib.get('sid') == sentence_id:
-            for elem in sent:
+            vg_count = 0
+            pastvg_count = 0
+            for elem in sent:                
                 if elem.tag == 'VG':
-                    aspect = elem.attrib.get('ASP')
-                    modal = elem.attrib.get('MODAL')
-                    voice = elem.attrib.get('VOICE')
-                    negation = elem.attrib.get('NEG')
-                    tense = elem.attrib.get('TENSE')
-                    return aspect, modal, voice, negation, tense
-    return aspect, modal, voice, negation, tense    
+                    vg_count += 1
+                    if elem.attrib.get('TENSE') == 'PAST':
+                        pastvg_count += 1
+                    if elem.attrib.get('main') == 'yes':
+                        aspect = elem.attrib.get('ASP')
+                        modal = elem.attrib.get('MODAL')
+                        voice = elem.attrib.get('VOICE')
+                        negation = elem.attrib.get('NEG')
+                        tense = elem.attrib.get('TENSE')
+            if vg_count == 0:
+                pass
+            else:
+                pasttense = pastvg_count / vg_count
+            return aspect, modal, voice, negation, tense, pasttense
+    return aspect, modal, voice, negation, tense, pasttense    
 
 def get_noun_features(case_id, sentence_id):
     if case_id == 'N/A':
         case_id = 'NA'
     index = caseList.index(case_id)    
-    tree = ET.parse('./uob_fp/SUM_2005_corpus/' + corpusList[index])
+    tree = ET.parse('./uob_fp/SUM_69_corpus/' + corpusList[index])
     root = tree.getroot()
     caseent = 0
     legalent = 0
@@ -129,9 +158,8 @@ def get_noun_features(case_id, sentence_id):
                     legalent = 1
                 else:
                     legalent = 0
-                if elem.attrib.get('type') == 'enamex-loc' or elem.attrib.get('type') == 'enamex-pers' or \
-                elem.attrib.get('type') == 'enamex-org':
+                if elem.attrib.get('type') == 'enamex-loc' or elem.attrib.get('type') == 'enamex-pers' or elem.attrib.get('type') == 'enamex-org':
                     enamex = 1
                 else:
                     enamex = 0
-            return caseent, legalent, enamex        
+            return caseent, legalent, enamex   

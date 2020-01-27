@@ -11,11 +11,22 @@ comsumCase = ['1.19','1.63', '1.68', 'N/A',
     '3.44', '3.41', '3.31', '3.32', '3.15', 
     '3.14', '3.28']
 
-fieldnames = ['case_id', 'sentence_id', 'para_id', 'judge', 'text', 'role', 'align', 'agree', 'outcome']
+ukhlCase = []
+fieldnames = None
 
-for v in range(len(comsumCase)):    
-    filename = 'comsum_' + comsumCase[v] + '.csv'
-    if comsumCase[v] == 'N/A':
+with open('./uob_fp/complete_sum.csv', 'r') as infile:
+    reader = csv.DictReader(infile)
+
+    fieldnames = reader.fieldnames
+    for row in reader:
+        if row['case_id'] not in ukhlCase:
+            ukhlCase.append(row['case_id'])
+
+# fieldnames = ['case_id', 'asmo_sent_id', 'sentence_id', 'para_id', 'judge', 'text', 'role', 'align', 'agree', 'outcome', 'ackn']
+
+for v in range(len(ukhlCase)):    
+    filename = 'comsum_' + ukhlCase[v] + '.csv'
+    if ukhlCase[v] == 'N/A':
         filename = 'comsum_' + 'NA' + '.csv'
     with open('./uob_fp/comsum_corpus/' + filename, 'w', newline='') as outfile:
         writer = csv.DictWriter(outfile, fieldnames=fieldnames)
@@ -24,10 +35,9 @@ for v in range(len(comsumCase)):
     with open('./uob_fp/complete_sum.csv', 'r') as infile, \
     open('./uob_fp/comsum_corpus/' + filename, 'a', newline='') as outfile:
         reader = csv.DictReader(infile)
+
         writer = csv.DictWriter(outfile, fieldnames=fieldnames)
 
         for row in reader:
-            if row['case_id'] == comsumCase[v]:
-                writer.writerow({'case_id': row['case_id'], 'sentence_id': row['sentence_id'], \
-                'para_id': row['para_id'], 'judge': row['judge'], 'text': row['text'], \
-                'role': row['role'], 'align': row['align'], 'agree': row['agree'], 'outcome': row['outcome']})
+            if row['case_id'] == ukhlCase[v]:
+                writer.writerow(row)
