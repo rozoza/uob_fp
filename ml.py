@@ -43,6 +43,10 @@ class ml:
         self.negcue_X = np.array([])
         self.tense_X = np.array([])
 
+        #new feature for embeddings
+        self.sentembed_X = np.array([])
+        self.wordembed_X = np.array([])
+
     def classifier_performance(self, X_train, y_train, X_test, y_test, classifier):
         classifier.fit(X_train, y_train)
         predictions = classifier.predict(X_test)
@@ -105,7 +109,33 @@ class ml:
         print('+++++++++++', 'DONE', '+++++++++++')
 
     #Extract all data and prepare it for ML
-    def prep_data(self, filename):
+    def get_sent_embed(self, filename):
+        with open('./uob_fp/' + filename + '.csv', 'r') as infile:
+            reader = csv.reader(infile)
+
+            for row in reader:
+                tmp_row = []
+                if row == None:
+                    continue
+                for column in row:
+                    column = float(column)
+                    tmp_row.append(column)
+                self.sentembed_X = np.append(self.sentembed_X, [tmp_row])
+
+    def get_word_embed(self, filename):
+        with open('./uob_fp/' + filename + '.csv', 'r') as infile:
+            reader = csv.reader(infile)
+
+            for row in reader:
+                tmp_row = []
+                if row == None:
+                    continue
+                for column in row:
+                    column = float(column)
+                    tmp_row.append(column)
+                self.wordembed_X = np.append(self.wordembed_X, [tmp_row])
+    
+    def prep_data(self, filename, filename2, filename3):
         with open('./uob_fp/' + filename + '.csv', 'r') as infile:
             reader = csv.DictReader(infile)
 
@@ -144,6 +174,10 @@ class ml:
                 self.wordlist_X = np.append(self.wordlist_X, [float(row['wordlist'])])
                 self.pasttense_X = np.append(self.pasttense_X, [float(row['past tense'])])
 
+        pipeline.get_sent_embed(filename2)
+        pipeline.get_word_embed(filename3)
+
+
     def exec(self):
         location = self.loc1_X, self.loc2_X, self.loc3_X, self.loc4_X, self.loc5_X, self.loc6_X
         HGlocation = self.HGloc1_X, self.HGloc2_X, self.HGloc3_X, self.HGloc4_X, self.HGloc5_X, self.HGloc6_X
@@ -161,11 +195,14 @@ class ml:
         pasttense = self.pasttense_X
         rhet_y = self.rhet_y
         rel_y = self.rel_y
+        target_size = 19394
+        sent_embed = self.sentembed_X.reshape(-1, target_size)
+        word_embed = self.wordembed_X.reshape(-1, target_size)
         
         import mode_selector
         mode = mode_selector.mode_selector(location, HGlocation, quotation, entities, asmo,
         cue_phrase, sent_length, HGsent_length, tfidf_max, tfidf_top20, tfidf_HGavg, rhet_role, 
-        wordlist, pasttense, rhet_y, rel_y)
+        wordlist, pasttense, rhet_y, rel_y, sent_embed, word_embed)
         num_of_features = input("how many features? ")
         X, feat_names = mode.select_features(num_of_features)
         Y, label, target_names = mode.select_target()
@@ -173,6 +210,6 @@ class ml:
         self.supervised_ml(X, Y, label, feat_names, target_names, mode)
 
 pipeline = ml()
-pipeline.prep_data('MLdata')
-# pipeline.prep_data('MLdata_train')
+pipeline.prep_data('MLdata', 'sent_embed', 'comsum_wordembed')
+pipeline.prep_data('MLdata_train')
 pipeline.exec()

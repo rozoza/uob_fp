@@ -1,7 +1,7 @@
 class mode_selector:
     def __init__(self, location, HGlocation, quotation, entities, asmo,
         cue_phrase, sent_length, HGsent_length, tfidf_max, tfidf_top20, tfidf_HGavg, rhet_role, 
-        wordlist, pasttense, rhet_y, rel_y):
+        wordlist, pasttense, rhet_y, rel_y, sent_embed, word_embed):
         self.feature_dict = {
             1 : location,
             2 : HGlocation,
@@ -16,7 +16,9 @@ class mode_selector:
             11 : tfidf_HGavg,
             12 : rhet_role,
             13 : wordlist,
-            14 : pasttense
+            14 : pasttense,
+            15 : sent_embed,
+            16 : word_embed
         }
         self.feature_opt = {
             'location' : 1,
@@ -32,7 +34,9 @@ class mode_selector:
             'tfidf_HGavg' : 11,
             'rhet_role' : 12,
             'wordlist' : 13,
-            'pasttense' : 14
+            'pasttense' : 14,
+            'sent_embed' : 15,
+            'word_embed' : 16
         }
         self.target_dict = {
             1 : rhet_y,
